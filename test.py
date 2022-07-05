@@ -3,12 +3,18 @@ from datetime import datetime
 import json
 import pandas as pd
 
+#초기 검색 해시태그
+searching_tag_list = ["#골프웨어", "#캠핑", "#요리", "#화장품"]# "#공구", "#광고", "#협찬", "#캠핑", "#골프", "#요리", "#뷰티", "#육아", "#맛집", "#육아", "#요리", "#데일리룩", "#ootd", "#운동", "#직장인", "#다이어트", "#테니스", "#라이딩", "#댕댕이", "#화장품", "#산책", "#발색", "#카페", "#분위기", "#일상", "#오늘", "#여친", "#남친", "#커플", "#데이트", "#가족", "#먹방", "#서울", "#호캉스", "#아이폰", "#차박", "#자동차", "#호텔", "#책", "#영화", "#주방"]
 
-searching_tag_list = ["#캠핑"] #"#골프", "#코디", "테니스", "오운완"]
+#초기 검색 해시태그로부터 얻는 추천 해시태그
 recommend_tag_list = []
+
+#계정명
 account_list = []
+
+#계정정보
 account_info_list = []
-df = pd.DataFrame
+
 
 # 인스타그램의 API는 로그인 정보가 필요하므로
 # 먼저 로그인을 진행한 후 사용
@@ -103,8 +109,8 @@ class Instagram:
         return r.json()["data"]
 
 
-username = "hwany_01"
-password = "ghksl01!"
+username = ""
+password = ""
 
 instagram = Instagram()
 instagram.login(username, password)
@@ -151,7 +157,7 @@ print(avg_like)
 print(followers)
 print(following)'''
 
-
+#초기 검색 해시태그 리스트로 추천 해시태그 리스트 생성
 for searching_tag in searching_tag_list:
     tags = instagram.get_top_search_tag(searching_tag)
     for tag in tags:
@@ -160,7 +166,7 @@ for searching_tag in searching_tag_list:
 
 print(recommend_tag_list)
 
-
+#추천 해시태그 리스트로 계정명 리스트 생성
 for recommend_tag in recommend_tag_list:
     outer_hashtag_id = instagram.get_search_data_tag_name(recommend_tag)
 
@@ -170,11 +176,11 @@ for recommend_tag in recommend_tag_list:
         for point in inner_hashtag_id:
             point_id = point["media"]["user"]["username"]
             account_list.append(point_id)
-            print(point_id)
+            #print(point_id)
 
-#print(account_list) ##too much time
+print(account_list)
 
-#for testing, use only 5 of recommended tags
+#테스트(추천 해시태그 중 5개만 사용)
 '''for i in range(5):
     outer_hashtag_id = instagram.get_search_data_tag_name(recommend_tag_list[i])
 
@@ -186,6 +192,7 @@ for recommend_tag in recommend_tag_list:
             account_list.append(point_id)
             print(point_id)'''
 
+#계정명 리스트로 계정정보 리스트 생성
 for account in account_list:
     individual_info_list = [] 
     account_info = instagram.get_user_info(account)
@@ -209,7 +216,14 @@ for account in account_list:
 
 
 
+column = ['팔로잉', '팔로워', '평균 좋아요']
+df = pd.DataFrame(account_info_list, columns = column)
 
+df.insert(0, "account_id", account_list, True)
+df.drop_duplicates(ignore_index=True)
+print(df)
+
+df.to_excel("data.xlsx")
 
 
 
