@@ -1,18 +1,22 @@
 import requests
 from datetime import datetime
 import json
+import pandas as pd
 
-hashtag_list = []
+
+searching_tag_list = ["#캠핑"] #"#골프", "#코디", "테니스", "오운완"]
+recommend_tag_list = []
 account_list = []
 account_info_list = []
+df = pd.DataFrame
 
 # 인스타그램의 API는 로그인 정보가 필요하므로
 # 먼저 로그인을 진행한 후 사용
 class Instagram:
     def __init__(self): #로그인 시 값들이 채워짐
-        self.csrf_token = "" #실제요청 확인 토큰
-        self.session_id = "" #서버 id
-        self.headers = {} #
+        self.csrf_token = "" 
+        self.session_id = ""
+        self.headers = {}
         self.cookies = {}
 
         self.sess = None # 로그인 유지를 위해 requests의 session 클래스를 사용
@@ -105,17 +109,18 @@ password = "ghksl01!"
 instagram = Instagram()
 instagram.login(username, password)
 
-tags = instagram.get_top_search_tag("#여행")
+#전체 구현을 위한 bits
+'''tags = instagram.get_top_search_tag("#여행")
 outer_hashtag_id = instagram.get_search_data_tag_name("겨울")
 account_info = instagram.get_user_info("skku_spring__nsc")
 
 #단일 태그에 대한 추천 태그 리스트
 for tag in tags:
     this_tag = tag["hashtag"]["name"]
-    hashtag_list.append(this_tag)
+    recommend_tag_list.append(this_tag)
     #print(this_tag)
 
-#단일 태그에 대한 게시물 작성자 id 리스튼
+#단일 태그에 대한 게시물 작성자 id 리스트
 for row in outer_hashtag_id:
     inner_hashtag_id = row["layout_content"]["medias"]
 
@@ -140,8 +145,71 @@ account_info_list.append(followers)
 account_info_list.append(following)
 account_info_list.append(avg_like)
 
-print(hashtag_list)
+print(recommend_tag_list)
 print(account_list)
 print(avg_like)
 print(followers)
-print(following)
+print(following)'''
+
+
+for searching_tag in searching_tag_list:
+    tags = instagram.get_top_search_tag(searching_tag)
+    for tag in tags:
+        this_tag = tag["hashtag"]["name"]
+        recommend_tag_list.append(this_tag)
+
+print(recommend_tag_list)
+
+
+for recommend_tag in recommend_tag_list:
+    outer_hashtag_id = instagram.get_search_data_tag_name(recommend_tag)
+
+    for row in outer_hashtag_id:
+        inner_hashtag_id = row["layout_content"]["medias"]
+
+        for point in inner_hashtag_id:
+            point_id = point["media"]["user"]["username"]
+            account_list.append(point_id)
+            print(point_id)
+
+#print(account_list) ##too much time
+
+#for testing, use only 5 of recommended tags
+'''for i in range(5):
+    outer_hashtag_id = instagram.get_search_data_tag_name(recommend_tag_list[i])
+
+    for row in outer_hashtag_id:
+        inner_hashtag_id = row["layout_content"]["medias"]
+
+        for point in inner_hashtag_id:
+            point_id = point["media"]["user"]["username"]
+            account_list.append(point_id)
+            print(point_id)'''
+
+for account in account_list:
+    individual_info_list = [] 
+    account_info = instagram.get_user_info(account)
+    
+    followers = account_info["user"]["edge_followed_by"]["count"]
+    following = account_info["user"]["edge_follow"]["count"]
+    individual_info_list.append(followers)
+    individual_info_list.append(following)
+
+    like = 0
+    media_list = account_info["user"]["edge_owner_to_timeline_media"]["edges"]
+    for medium in media_list:
+        like += medium["node"]["edge_liked_by"]["count"]
+
+    avg_like = like / 12 
+    individual_info_list.append(avg_like)
+    
+    print(individual_info_list)
+    account_info_list.append(individual_info_list)
+
+
+
+
+
+
+
+
