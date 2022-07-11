@@ -1,13 +1,18 @@
+from numpy import outer
 import requests
 from datetime import datetime
 import json
 import pandas as pd
+import time
+#from fake_useragent import UserAgent
+
+#ua = UserAgent(verify_ssl=False)
 
 #초기 검색 해시태그
-searching_tag_list = ["#골프웨어", "#캠핑", "#요리", "#화장품"]# "#공구", "#광고", "#협찬", "#캠핑", "#골프", "#요리", "#뷰티", "#육아", "#맛집", "#육아", "#요리", "#데일리룩", "#ootd", "#운동", "#직장인", "#다이어트", "#테니스", "#라이딩", "#댕댕이", "#화장품", "#산책", "#발색", "#카페", "#분위기", "#일상", "#오늘", "#여친", "#남친", "#커플", "#데이트", "#가족", "#먹방", "#서울", "#호캉스", "#아이폰", "#차박", "#자동차", "#호텔", "#책", "#영화", "#주방"]
+searching_tag_list = ["#골프웨어", "#캠핑", "#요리", "#화장품", "#공구", "#광고", "#협찬", "#골프", "#뷰티", "#육아", "#맛집", "#육아", "#요리", "#데일리룩", "#ootd", "#운동", "#직장인", "#다이어트", "#테니스", "#라이딩", "#댕댕이", "#화장품", "#산책", "#발색", "#카페", "#분위기", "#일상", "#오늘", "#여친", "#남친", "#커플", "#데이트", "#가족", "#먹방", "#서울", "#호캉스", "#아이폰", "#차박", "#자동차", "#호텔", "#책", "#영화", "#주방"]
 
 #초기 검색 해시태그로부터 얻는 추천 해시태그
-recommend_tag_list = []
+recommend_tag_list = []#"캠핑", "골프", "요리", "뷰티", "육아", "맛집", "육아", "요리", "데일리룩", "ootd", "운동", "직장인", "다이어트", "테니스", "라이딩", "댕댕이", "화장품", "산책", "발색", "카페", "분위기", "일상", "오늘", "여친", "남친", "커플", "데이트", "가족", "먹방", "서울", "호캉스", "아이폰", "차박", "자동차", "호텔", "책", "영화", "주방"]
 
 #계정명
 account_list = []
@@ -76,7 +81,7 @@ class Instagram:
             }
         )
 
-        return r.json()["data"]["top"]["sections"]
+        return r.json()["data"]#["top"]["sections"]
 
     def get_top_search_tag(self, tag_name): # 인스타그램 검색창에 입력 시 실행되는 api, 추천 검색어를 반환함
         url = "https://www.instagram.com/web/search/topsearch/"
@@ -109,8 +114,11 @@ class Instagram:
         return r.json()["data"]
 
 
-username = ""
-password = ""
+#username = "dataisdataisdata"
+#password = "epdlxj1234!"
+
+username = "daumdataisnextdata" 
+password = "epdlxj1234!"
 
 instagram = Instagram()
 instagram.login(username, password)
@@ -158,30 +166,43 @@ print(followers)
 print(following)'''
 
 #초기 검색 해시태그 리스트로 추천 해시태그 리스트 생성
-for searching_tag in searching_tag_list:
-    tags = instagram.get_top_search_tag(searching_tag)
-    for tag in tags:
-        this_tag = tag["hashtag"]["name"]
-        recommend_tag_list.append(this_tag)
+try:
+    for searching_tag in searching_tag_list:
+        tags = instagram.get_top_search_tag(searching_tag)
+        for tag in tags:
+            this_tag = tag["hashtag"]["name"]
+            recommend_tag_list.append(this_tag)
+
+    
+except:
+    pass
 
 print(recommend_tag_list)
 
-#추천 해시태그 리스트로 계정명 리스트 생성
-for recommend_tag in recommend_tag_list:
-    outer_hashtag_id = instagram.get_search_data_tag_name(recommend_tag)
+try:
+    #추천 해시태그 리스트로 계정명 리스트 생성
+    for recommend_tag in recommend_tag_list:
+        time.sleep(10)
+        outer_hashtag_id = instagram.get_search_data_tag_name(recommend_tag)
+        dig_outer = outer_hashtag_id["top"]["sections"]
+        print(recommend_tag)
+        
+        for row in dig_outer:#outer_hashtag_id:
+            inner_hashtag_id = row["layout_content"]["medias"]
 
-    for row in outer_hashtag_id:
-        inner_hashtag_id = row["layout_content"]["medias"]
-
-        for point in inner_hashtag_id:
-            point_id = point["media"]["user"]["username"]
-            account_list.append(point_id)
-            #print(point_id)
+            for point in inner_hashtag_id:
+                point_id = point["media"]["user"]["username"]
+                account_list.append(point_id)
+                #print(point_id)
+except:
+    pass
 
 print(account_list)
+print(len(account_list))
 
 #테스트(추천 해시태그 중 5개만 사용)
 '''for i in range(5):
+    time.sleep(3)
     outer_hashtag_id = instagram.get_search_data_tag_name(recommend_tag_list[i])
 
     for row in outer_hashtag_id:
@@ -192,38 +213,49 @@ print(account_list)
             account_list.append(point_id)
             print(point_id)'''
 
-#계정명 리스트로 계정정보 리스트 생성
-for account in account_list:
-    individual_info_list = [] 
-    account_info = instagram.get_user_info(account)
-    
-    followers = account_info["user"]["edge_followed_by"]["count"]
-    following = account_info["user"]["edge_follow"]["count"]
-    individual_info_list.append(followers)
-    individual_info_list.append(following)
+try:
+    #계정명 리스트로 계정정보 리스트 생성
+    for account in account_list:
+        time.sleep(60)
+        individual_info_list = [] 
+        account_info = instagram.get_user_info(account)
+        
+        followers = account_info["user"]["edge_followed_by"]["count"]
+        following = account_info["user"]["edge_follow"]["count"]
+        individual_info_list.append(followers)
+        individual_info_list.append(following)
 
-    like = 0
-    media_list = account_info["user"]["edge_owner_to_timeline_media"]["edges"]
-    for medium in media_list:
-        like += medium["node"]["edge_liked_by"]["count"]
+        like = 0
+        comment = 0
+        media_list = account_info["user"]["edge_owner_to_timeline_media"]["edges"]
+        for medium in media_list:
+            like += medium["node"]["edge_liked_by"]["count"]
+            comment += medium["node"]["edge_media_to_comment"]["count"]
 
-    avg_like = like / 12 
-    individual_info_list.append(avg_like)
-    
-    print(individual_info_list)
-    account_info_list.append(individual_info_list)
+        media_length = len(media_list)
+        avg_like = like / media_length
+        avg_comment = comment / media_length
+        individual_info_list.append(avg_like)
+        individual_info_list.append(avg_comment)
+
+        er_rate = (avg_like + avg_comment) / followers
+        individual_info_list.append(er_rate)
+
+        
+        print(individual_info_list)
+        account_info_list.append(individual_info_list)
+except:
+    pass
 
 
 
 
-column = ['팔로잉', '팔로워', '평균 좋아요']
+column = ['팔로잉', '팔로워', '평균 좋아요', '평균 댓글수', 'ER 지수']
 df = pd.DataFrame(account_info_list, columns = column)
 
 df.insert(0, "account_id", account_list, True)
-df.drop_duplicates(ignore_index=True)
+df.drop_duplicates(ignore_index=True, inplace = True)
 print(df)
 
-df.to_excel("data.xlsx")
-
-
+df.to_excel("data-1.xlsx")
 
