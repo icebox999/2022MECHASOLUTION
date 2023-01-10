@@ -100,10 +100,10 @@ class Instagram:
             "Referer": "https://www.instagram.com/accounts/login/",
             "x-csrftoken": csrf,
             "origin": "https://www.instagram.com",
-            "x-asbd-id": "198387",
-            "x-ig-app-id": "936619743392459",
-            "x-ig-www-claim": "hmac.AR3x4QUfUeLN-HlD1F6ggHoyNkJ-ml72JyznbKJkmjUQkKGb",
-            "x-instagram-ajax": "1006797161"
+            "x-asbd-id": "",
+            "x-ig-app-id": "",
+            "x-ig-www-claim": "",
+            "x-instagram-ajax": ""
 
         } 
 
