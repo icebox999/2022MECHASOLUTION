@@ -119,42 +119,6 @@ class Instagram:
         else:
             print("login failed ", login_response.text)
 
-    
-
-    def get_search_data_tag_name(self, tag_name):  # 해쉬태그를 검색하여 나오는 게시물 정보
-        url = "https://i.instagram.com/api/v1/tags/web_info"
-
-        r = self.sess.get(
-            url,
-            proxies=proxies,
-            headers=self.headers,
-            cookies=self.cookies,
-            params={
-                "tag_name": tag_name
-            },
-            verify=False
-        )
-        
-        return r.json()["data"]  # ["top"]["sections"]
-
-    def get_top_search_tag(self, tag_name):  # 인스타그램 검색창에 입력 시 실행되는 api, 추천 검색어를 반환함
-        url = "https://www.instagram.com/web/search/topsearch/"
-
-        r = self.sess.get(
-            url,
-            proxies=proxies,
-            headers=self.headers,
-            cookies=self.cookies,
-            params={
-                "context": "blended",
-                "query": tag_name,
-                "include_reel": "true"
-            },
-            verify=False
-        )
-
-        return r.json()["hashtags"]
-
     def get_user_info(self, user_id):  # 단일 계정에 대한 팔로워 수를 반환
         url = "https://i.instagram.com/api/v1/users/web_profile_info"
 
