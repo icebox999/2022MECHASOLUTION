@@ -8,25 +8,61 @@ from tqdm import tqdm
 import re
 from sqlalchemy import create_engine
 import os
+from random import randint
+from selenium.webdriver.common.by import By
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 #load_dotenv()
 
+proxies = {
+
+}
+
 df = pd.read_excel("usernames.xlsx", names=['id'])
 
-account_list = df.values.tolist()
+account_list = df.values.tolist() 
 
 insert_account_list = []
 
 comment_list = []
 
-'''engine = create_engine(f"mysql+pymysql://{os.getenv('dbus')}:{os.getenv('dbpw')}@{os.getenv('dbip')}/{os.getenv('dbnm')}")
+'''def login(username, password):
+    options = webdriver.ChromeOptions()
+    PROXY = "" # IP:Port
+    webdriver.DesiredCapabilities.CHROME['proxy'] = {
+        "httpProxy": PROXY,
+        "ftpProxy": PROXY,
+        "sslProxy": PROXY,
+        "proxyType": "MANUAL"
+    }
+    options.add_experimental_option("excludeSwitches", ["enable-logging"])
+    driver = webdriver.Chrome(options=options)
+    driver.get("https://www.instagram.com/")
+    driver.implicitly_wait(3)
 
-conn = engine.connect()
+    driver.find_element(By.CSS_SELECTOR, "#loginForm > div > div:nth-child(1) > div > label > input").send_keys(username)
+    driver.find_element(By.CSS_SELECTOR, "#loginForm > div > div:nth-child(2) > div > label > input").send_keys(password)
+    driver.find_element(By.CSS_SELECTOR, "#loginForm > div > div:nth-child(3) > button > div").click()
+    time.sleep(2)
 
-raw_info = pd.read_sql("SELECT * FROM RawInfo;",conn)
-id_list = raw_info['Username'].to_list()
-print(id_list)'''
+    _cookies = driver.get_cookies()
+    cookie_dict = {}
+    for cookie in _cookies:
+        cookie_dict[cookie ['name']] = cookie['value']
 
+    driver.close()
+    driver.quit()
+    print(cookie_dict)
+
+    return cookie_dict
+
+def set_cookies(cookies):
+    sess = requests.session()
+    sess.cookies.update(cookies)
+    #sess.proxies.update(proxies)
+    return sess'''
 
 # 인스타그램의 API는 로그인 정보가 필요하므로
 # 먼저 로그인을 진행한 후 사용
@@ -46,7 +82,7 @@ class Instagram:
         self.sess = requests.session()
 
         time = int(datetime.now().timestamp())
-        response = self.sess.get(link) #로그인 링크에 대한 세션을 반환
+        response = self.sess.get(link, proxies=proxies) #로그인 링크에 대한 세션을 반환
         csrf = response.cookies['csrftoken']
 
         payload = {
@@ -62,32 +98,43 @@ class Instagram:
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 105.0.0.11.118 (iPhone11,8; iOS 12_3_1; en_US; en-US; scale=2.00; 828x1792; 165586599)",
             "X-Requested-With": "XMLHttpRequest",
             "Referer": "https://www.instagram.com/accounts/login/",
-            "x-csrftoken": csrf
+            "x-csrftoken": csrf,
+            "origin": "https://www.instagram.com",
+            "x-asbd-id": "198387",
+            "x-ig-app-id": "936619743392459",
+            "x-ig-www-claim": "hmac.AR3x4QUfUeLN-HlD1F6ggHoyNkJ-ml72JyznbKJkmjUQkKGb",
+            "x-instagram-ajax": "1006797161"
+
         } 
 
-        login_response = self.sess.post(login_url, data=payload, headers=self.headers) #로그인 api에 parameter들을 post
+        login_response = self.sess.post(login_url, data=payload, headers=self.headers, proxies=proxies) #로그인 api에 parameter들을 post
         json_data = json.loads(login_response.text)
 
         print(login_response.status_code, login_response.text)
-
+        print(login_response.cookies)
+        print('eee')
         # 토큰 등 로그인 정보를 받아온 후 cookies 변수에 저장
         if json_data["authenticated"]:
             self.cookies = login_response.cookies
         else:
             print("login failed ", login_response.text)
 
+    
+
     def get_search_data_tag_name(self, tag_name):  # 해쉬태그를 검색하여 나오는 게시물 정보
         url = "https://i.instagram.com/api/v1/tags/web_info"
 
         r = self.sess.get(
             url,
+            proxies=proxies,
             headers=self.headers,
             cookies=self.cookies,
             params={
                 "tag_name": tag_name
-            }
+            },
+            verify=False
         )
-
+        
         return r.json()["data"]  # ["top"]["sections"]
 
     def get_top_search_tag(self, tag_name):  # 인스타그램 검색창에 입력 시 실행되는 api, 추천 검색어를 반환함
@@ -95,13 +142,15 @@ class Instagram:
 
         r = self.sess.get(
             url,
+            proxies=proxies,
             headers=self.headers,
             cookies=self.cookies,
             params={
                 "context": "blended",
                 "query": tag_name,
                 "include_reel": "true"
-            }
+            },
+            verify=False
         )
 
         return r.json()["hashtags"]
@@ -111,11 +160,13 @@ class Instagram:
 
         r = self.sess.get(
             url,
+            proxies=proxies,
             headers=self.headers,
             cookies=self.cookies,
             params={
                 "username": user_id
-            }
+            },
+            verify=False
         )
 
         return r.json()["data"]
@@ -125,12 +176,14 @@ class Instagram:
 
         r = self.sess.get(
             url,
+            proxies=proxies,
             headers=self.headers,
             cookies=self.cookies,
             params={
                 "can_support_threading": "true",
                 "permalink_enabled": "false"
-            }
+            },
+            verify=False
         )
         return r.json()["comments"]
 
@@ -141,14 +194,19 @@ username = ""
 password = ""
 
 instagram = Instagram()
+
 instagram.login(username, password)
 
 
-#print(account_list)
+#cookies = login(username, password)
+#sess = set_cookies(cookies)
+#print(cookies)
+#instagram = Instagram(cookies, sess)
 
+# print(cookies)
 for account in tqdm(account_list, desc="getting userinfo"):
     try:
-        time.sleep(30)
+        time.sleep(randint(10, 40))
         individual_info_list = []
         account_info = instagram.get_user_info(account) # 하나의 account 정보 반환
 
@@ -163,7 +221,7 @@ for account in tqdm(account_list, desc="getting userinfo"):
             media_id.append(medium["node"]["id"])
 
         for medium_id in media_id: # 하나의 account에 대한 계시물 고유 id 리스트 생성
-            time.sleep(30)
+            time.sleep(randint(10, 20))
             comments = instagram.get_comment(medium_id)  
             for comment in comments:
                 commenttext += comment["text"]
