@@ -1,3 +1,9 @@
+''' 
+
+crawler.py의 댓글 추출 부분만 떼어낸 코드입니다.
+
+'''
+
 from numpy import outer
 import requests
 from datetime import datetime
